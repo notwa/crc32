@@ -27,8 +27,8 @@ extern char args_info[];
 extern char args_usage[];
 extern char args_help_suffix[];
 
-extern const int args_count;
-extern char* args_args[];
+extern const int args_switch_count;
+extern char* args_switches[];
 extern void (*args_functions[])();
 
 void args_handle(int argc, char* argv[]);
@@ -57,12 +57,14 @@ static void args_print_usage()
 	printf(args_usage, args_program_name);
 }
 
-static void args_print_args()
+static void args_print_switches()
 {
 	int i;
-	for (i = 0; i < args_count * args_columns; i += args_columns) {
+	for (i = 0; i < args_switch_count * args_columns; i += args_columns) {
 		printf("  %s, %s %s\n",
-			args_args[i], args_args[i + 1], args_args[i + 2]);
+			args_switches[i],
+			args_switches[i + 1],
+			args_switches[i + 2]);
 	}
 	printf(args_help_suffix);
 }
@@ -71,17 +73,17 @@ void args_print_help()
 {
 	args_print_info();
 	puts("");
-	args_print_args();
+	args_print_switches();
 	exit(0);
 }
 
 static int args_get_index(char* name)
 {
 	int i;
-	for (i = 0; i < args_count * args_columns; i++) {
+	for (i = 0; i < args_switch_count * args_columns; i++) {
 		if (i % args_columns == args_columns - 1)
 			continue; /* skip checking the description column */
-		if (!strcmp(args_args[i], name)) {
+		if (!strcmp(args_switches[i], name)) {
 			return i / args_columns;
 		}
 	}
