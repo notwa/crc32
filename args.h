@@ -47,6 +47,13 @@ static char** args_argv = NULL;
 static int args_current = 0;
 static int args_previous = 0;
 
+static char args_is_blank(char* s)
+{
+	if (s == NULL || s[0] == '\0' || s[0] == ' ')
+		return 1;
+	return 0;
+}
+
 static void args_print_info()
 {
 	printf(args_info);
@@ -61,8 +68,13 @@ static void args_print_switches()
 {
 	int i;
 	for (i = 0; i < args_switch_count * args_columns; i += args_columns) {
-		printf("  %s, %s %s\n",
-			args_switches[i],
+		printf("  ");
+		if (args_is_blank(args_switches[i])) {
+			printf("   "); 
+		} else {
+			printf("%s,", args_switches[i]);
+		}
+		printf(" %s %s\n",
 			args_switches[i + 1],
 			args_switches[i + 2]);
 	}
@@ -83,6 +95,8 @@ static int args_get_index(char* name)
 	for (i = 0; i < args_switch_count * args_columns; i++) {
 		if (i % args_columns == args_columns - 1)
 			continue; /* skip checking the description column */
+		if (args_is_blank(args_switches[i]))
+			continue;
 		if (!strcmp(args_switches[i], name)) {
 			return i / args_columns;
 		}
