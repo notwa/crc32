@@ -27,7 +27,7 @@
 	#define FREOPEN_BLANK (NULL)
 #endif
 
-static uint32 remainder = 0xFFFFFFFF;
+static ulong remainder = 0xFFFFFFFF;
 
 static FILE* input_stream = NULL;
 static char* input_filename = "-";
@@ -135,10 +135,6 @@ static void cycle_input()
 		remainder ^= 0xFFFFFFFF;
 	if (reflect_output)
 		remainder = crc_reflect(remainder);
-	/*	if remainder has unnecessary bits from
-		left shifting, remove them
-	remainder &= 0xFFFFFFFF;
-	*/
 }
 
 static void print_crc()

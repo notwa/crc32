@@ -22,28 +22,28 @@
 
 /* interface */
 
-typedef unsigned long uint32;
+typedef unsigned long ulong;
 
-void crc_cycle(uint32 *remainder, char c);
-uint32 crc_reflect(uint32 input);
+void crc_cycle(ulong *remainder, char c);
+ulong crc_reflect(ulong input);
 
 void crc_set_big_endian();
 void crc_set_little_endian();
-void crc_set_polynomial(uint32 p);
+void crc_set_polynomial(ulong p);
 
 /* implementation */
 
 static char crc_big_endian = 0;
 static const int crc_table_size = 0x100;
-static uint32* crc_be_table = NULL; /* big endian */
-static uint32* crc_le_table = NULL; /* little endian */
-static uint32 crc_polynomial = 0x04C11DB7;
+static ulong* crc_be_table = NULL; /* big endian */
+static ulong* crc_le_table = NULL; /* little endian */
+static ulong crc_polynomial = 0x04C11DB7;
 
-uint32 crc_reflect(uint32 input)
+ulong crc_reflect(ulong input)
 {
-	uint32 reflected = 0;
-	unsigned int i;
-	for (i = 0; i < sizeof(uint32) * 8; i++) {
+	ulong reflected = 0;
+	int i;
+	for (i = 0; i < 4 * 8; i++) {
 		reflected <<= 1;
 		reflected |= input & 1;
 		input >>= 1;
@@ -51,9 +51,9 @@ uint32 crc_reflect(uint32 input)
 	return reflected;
 }
 
-static uint32* crc_alloc(size_t size)
+static ulong* crc_alloc(size_t size)
 {
-	uint32* p = (uint32*) malloc(size * sizeof(uint32));
+	ulong* p = (ulong*) malloc(size * sizeof(ulong));
 	if (p == NULL)
 		exit(1);
 	return p;
@@ -73,7 +73,7 @@ static void crc_allocate_tables_once()
 
 static void crc_fill_big_endian_table()
 {
-	const uint32 least_significant_bit = 1 << 31;
+	const ulong least_significant_bit = 1 << 31;
 	int c, i;
 	
 	crc_allocate_tables_once();
@@ -88,13 +88,14 @@ static void crc_fill_big_endian_table()
 				crc_be_table[c] <<= 1;
 			}
 		}
+		crc_be_table[c] &= 0xFFFFFFFF;
 	}
 }
 
 static void crc_fill_little_endian_table()
 {
-	const uint32 least_significant_bit = 1;
-	const uint32 reflected_polynomial = crc_reflect(crc_polynomial);
+	const ulong least_significant_bit = 1;
+	const ulong reflected_polynomial = crc_reflect(crc_polynomial);
 	int c, i;
 	
 	crc_allocate_tables_once();
@@ -135,22 +136,23 @@ void crc_set_little_endian()
 	crc_big_endian = 0;
 }
 
-void crc_set_polynomial(uint32 p)
+void crc_set_polynomial(ulong p)
 {
 	crc_polynomial = p;
 }
 
-void crc_cycle(uint32 *remainder, char c)
+void crc_cycle(ulong *remainder, char c)
 {
 	crc_fill_tables_once();
 	if (crc_big_endian) {
-		const uint32 newByte = crc_be_table[
+		const ulong newByte = crc_be_table[
 			((*remainder) >> 24) ^ c];
 		/* printf("%08X00 ^ %08X =\n",
 			(int)(*remainder), (int)newByte); */
 		*remainder = ((*remainder) << 8) ^ newByte;
+		*remainder &= 0xFFFFFFFF;
 	} else {
-		const uint32 newByte = crc_le_table[
+		const ulong newByte = crc_le_table[
 			((*remainder) ^ c) & 0xFF];
 		/* printf("  %08X ^ %08X =\n",
 			(int)((*remainder) >> 8), (int)newByte); */
