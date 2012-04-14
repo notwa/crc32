@@ -74,7 +74,8 @@ static void crc_allocate_tables_once()
 static void crc_fill_big_endian_table()
 {
 	const ulong least_significant_bit = 1 << 31;
-	int c, i;
+	ulong c;
+	int i;
 	
 	crc_allocate_tables_once();
 	
@@ -87,8 +88,8 @@ static void crc_fill_big_endian_table()
 			} else {
 				crc_be_table[c] <<= 1;
 			}
+			crc_be_table[c] &= 0xFFFFFFFF;
 		}
-		crc_be_table[c] &= 0xFFFFFFFF;
 	}
 }
 
@@ -96,7 +97,8 @@ static void crc_fill_little_endian_table()
 {
 	const ulong least_significant_bit = 1;
 	const ulong reflected_polynomial = crc_reflect(crc_polynomial);
-	int c, i;
+	ulong c;
+	int i;
 	
 	crc_allocate_tables_once();
 	/* printf("p: %08X\n", (int)reflected_polynomial); */
