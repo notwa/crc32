@@ -77,11 +77,6 @@ void set_polynomial()
 	crc_set_polynomial(p);
 }
 
-void set_big_endian()
-{
-	crc_set_big_endian();
-}
-
 void set_binary()
 {
 	print_binary = 1;
@@ -99,7 +94,7 @@ void set_reflect()
 
 void (*args_functions[])() =
 	{args_print_help, print_license, set_input, start_at, set_polynomial,
-	set_big_endian, set_binary, set_xor, set_reflect};
+	crc_set_big_endian, set_binary, set_xor, set_reflect};
 
 static void open_stream()
 {
