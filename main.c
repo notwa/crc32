@@ -126,9 +126,8 @@ static void cycle_input()
 {
 	int c;
 	open_stream();
-	while ((c = getc(input_stream)) != EOF) {
+	while ((c = getc(input_stream)) != EOF)
 		crc_cycle(&remainder, c);
-	}
 	close_stream();
 	
 	if (xor_output)
