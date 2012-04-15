@@ -46,6 +46,7 @@ static char** args_argv = NULL;
 
 static int args_current = 0;
 static int args_previous = 0;
+static char* args_previous_name = NULL;
 
 static char args_is_blank(char* s)
 {
@@ -120,12 +121,13 @@ static char* args__poll(char wants_switch)
 	if (args_current >= args_argc) {
 		if (args_current - 1 == args_previous)
 			fprintf(stderr, "%s requires an argument.\n",
-				args_argv[args_previous]);
+				args_previous_name);
 		else
 			fprintf(stderr, "%s requires another argument.\n",
-				args_argv[args_previous]);
+				args_previous_name);
 		args_print_usage();
 		exit(1);
+	}
 
 	arg = args_argv[args_current];
 	if (!wants_switch) {
@@ -142,9 +144,8 @@ static char* args__poll(char wants_switch)
 			args_current++;
 		}
 		return short_;
-	} else {
-		args_current++;
 	}
+	args_current++;
 	return arg;
 }
 
@@ -172,6 +173,8 @@ void args_handle(int argc, char** argv)
 		
 		args_previous = args_current;
 		name = args_poll_for_switch();
+		args_previous_name = name;
+
 		index = args_get_index(name);
 		if (index < 0) {
 			fprintf(stderr, "Unknown option: %s\n", name);
