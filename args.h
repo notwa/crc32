@@ -97,6 +97,20 @@ void args_print_help()
 	exit(0);
 }
 
+static void args_check_bounds()
+{
+	if (args_current >= args_argc) {
+		if (args_current - 1 == args_previous)
+			fprintf(stderr, "%s requires an argument.\n",
+				args_previous_name);
+		else
+			fprintf(stderr, "%s requires another argument.\n",
+				args_previous_name);
+		args_print_usage();
+		exit(1);
+	}
+}
+
 static int args_get_index(char* name)
 {
 	int i;
@@ -114,20 +128,11 @@ static int args_get_index(char* name)
 
 static char* args__poll(char wants_switch)
 {
-	static char short_[3] = "-\0";
+	static char short_[3] = "--";
 	static int pos = 0;
 	char* arg = NULL;
 
-	if (args_current >= args_argc) {
-		if (args_current - 1 == args_previous)
-			fprintf(stderr, "%s requires an argument.\n",
-				args_previous_name);
-		else
-			fprintf(stderr, "%s requires another argument.\n",
-				args_previous_name);
-		args_print_usage();
-		exit(1);
-	}
+	args_check_bounds();
 
 	arg = args_argv[args_current];
 	if (!wants_switch) {
