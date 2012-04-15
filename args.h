@@ -54,6 +54,13 @@ static char args_is_blank(char* s)
 	return 0;
 }
 
+static char args_is_short(char *s)
+{
+	if (!args_is_blank(s) && s[0] == '-' && s[1] != '\0' && s[1] != '-')
+		return 1;
+	return 0;
+}
+
 static void args_print_info()
 {
 	printf(args_info);
@@ -104,8 +111,12 @@ static int args_get_index(char* name)
 	return -1;
 }
 
-char* args_poll()
+static char* args__poll(char wants_switch)
 {
+	static char short_[3] = "-\0";
+	static int pos = 0;
+	char* arg = NULL;
+
 	if (args_current >= args_argc) {
 		if (args_current - 1 == args_previous)
 			fprintf(stderr, "%s requires an argument.\n",
@@ -115,9 +126,36 @@ char* args_poll()
 				args_argv[args_previous]);
 		args_print_usage();
 		exit(1);
+
+	arg = args_argv[args_current];
+	if (!wants_switch) {
+		args_current++;
+		return arg + pos * sizeof(char);
 	}
-	args_current++;
-	return args_argv[args_current - 1];
+	if (args_is_short(arg)) {
+		if (pos == 0)
+			pos++;
+		short_[1] = arg[pos];
+		pos++;
+		if (arg[pos] == '\0') {
+			pos = 0;
+			args_current++;
+		}
+		return short_;
+	} else {
+		args_current++;
+	}
+	return arg;
+}
+
+static char* args_poll_for_switch()
+{
+	return args__poll(1);
+}
+
+char* args_poll()
+{
+	return args__poll(0);
 }
 
 void args_handle(int argc, char** argv)
@@ -133,7 +171,7 @@ void args_handle(int argc, char** argv)
 		int index;
 		
 		args_previous = args_current;
-		name = args_poll();
+		name = args_poll_for_switch();
 		index = args_get_index(name);
 		if (index < 0) {
 			fprintf(stderr, "Unknown option: %s\n", name);
@@ -145,3 +183,4 @@ void args_handle(int argc, char** argv)
 }
 
 #endif
+
