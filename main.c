@@ -37,8 +37,11 @@ static char reflect_output = 0;
 
 char args_info[] = "crc32 - 32-bit cyclic redundancy check calculator\n";
 char args_usage[] = "Usage: %s [-i f] [-s n] [-p n] [-e] [-x] [-r] [-b]\n";
-char args_help_suffix[] = "\n\
-numbers (n) can be entered as hexadecimal or octal with prefixes\n";
+void args_print_help_suffix()
+{
+	puts("\n\
+numbers (n) can be entered as hexadecimal or octal with prefixes");
+}
 
 const int args_switch_count = 9;
 char* args_switches[] = {

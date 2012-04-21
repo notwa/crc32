@@ -26,7 +26,7 @@
 
 extern char args_info[];
 extern char args_usage[];
-extern char args_help_suffix[];
+extern void args_print_help_suffix();
 
 extern const int args_switch_count;
 extern char* args_switches[];
@@ -87,7 +87,7 @@ static void args_print_switches()
 			args_switches[i + 1],
 			args_switches[i + 2]);
 	}
-	printf(args_help_suffix);
+	args_print_help_suffix();
 }
 
 void args_print_help()
@@ -120,9 +120,8 @@ static int args_get_index(char* name)
 			continue; /* skip checking the description column */
 		if (args_is_blank(args_switches[i]))
 			continue;
-		if (!strcmp(args_switches[i], name)) {
+		if (!strcmp(args_switches[i], name))
 			return i / args_columns;
-		}
 	}
 	return -1;
 }
@@ -138,7 +137,9 @@ static char* args__poll(char wants_switch)
 	arg = args_argv[args_current];
 	if (!wants_switch) {
 		args_current++;
-		return arg + pos * sizeof(char);
+		arg += pos * sizeof(char);
+		pos = 0;
+		return arg;
 	}
 	if (args_is_short(arg)) {
 		if (pos == 0)
