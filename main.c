@@ -20,8 +20,8 @@
 
 static ulong remainder = 0xFFFFFFFF;
 
-static FILE* input_stream = NULL;
-static char* input_filename = "-";
+static FILE *input_stream = NULL;
+static char *input_filename = "-";
 static char print_binary = 0;
 static char xor_output = 1;
 static char reflect_output = 0;
@@ -43,7 +43,7 @@ const char help2[] = "\
 numbers <n> may be entered as hexadecimal or octal with prefixes\n\
 ";
 
-void handle_flag(char flag, char* (*nextarg)()) {
+void handle_flag(char flag, char *(*nextarg)()) {
 	/* TODO: check for NULL on nextarg */
 	switch (flag) {
 	case 'h':
@@ -87,7 +87,7 @@ static void open_stream()
 	}
 	if (input_stream == NULL) {
 		fprintf(stderr, "Could not open file for reading: %s\n",
-			input_filename);
+		    input_filename);
 		exit(1);
 	}
 }
@@ -119,7 +119,7 @@ static void print_crc()
 		printf("%08X\n", (int) remainder);
 }
 
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
 	crc_set_little_endian();
 	args_parse(argc, argv, handle_flag, NULL);

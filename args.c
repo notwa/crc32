@@ -6,14 +6,15 @@
  */
 
 #include "args.h"
+
 #include <stddef.h>
 
 static int argc, argi;
-static char** argv, * flag;
+static char **argv, *flag;
 
-static char* nextarg()
+static char *nextarg()
 {
-	char* temp = flag;
+	char *temp = flag;
 	flag = NULL;
 	if (temp[1])
 		return temp + 1;
@@ -22,13 +23,13 @@ static char* nextarg()
 	return argv[argi];
 }
 
-void args_parse(int argc_, char** argv_,
-	void flagfn(char, char*()), void plainfn(char*))
+void args_parse(int argc_, char **argv_,
+    void flagfn(char, char*()), void plainfn(char*))
 {
 	argc = argc_;
 	argv = argv_;
 	for (argi = 1; argi < argc; argi++) {
-		char* arg = argv[argi];
+		char *arg = argv[argi];
 		if (!arg[0])
 			continue;
 

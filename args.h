@@ -5,6 +5,6 @@
  * copy of the license along with this program; see the file LICENSE.
  */
 
-void args_parse(int argc, char** argv,
-	void flagfn(char, char*()), void plainfn(char*));
+void args_parse(int argc, char **argv,
+    void flagfn(char, char*()), void plainfn(char*));
 
