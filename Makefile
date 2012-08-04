@@ -1,6 +1,6 @@
 PROGRAM = crc32
 .PHONY: all clean install
-FILES = main.c
+FILES = main.c args.c
 
 CFLAGS += -Wall -Werror -ansi -pedantic
 LDFLAGS +=

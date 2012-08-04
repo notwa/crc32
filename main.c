@@ -7,6 +7,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "crc32.h"
 #include "args.h"
@@ -25,69 +26,55 @@ static char print_binary = 0;
 static char xor_output = 1;
 static char reflect_output = 0;
 
-char args_info[] = "crc32 - 32-bit cyclic redundancy check calculator\n";
-char args_usage[] = "Usage: %s [-i f] [-s n] [-p n] [-e] [-x] [-r] [-b]\n";
-void args_print_help_suffix()
-{
-	puts("\n\
-numbers (n) can be entered as hexadecimal or octal with prefixes");
+const char help1[] = "\
+crc32 - a 32-bit cyclic rendundancy check calculator\n\
+\n\
+  -h                display this text\n\
+  -i <file>         open file for reading (default: stdin)\n\
+  -s <n>            start cycle with n (default: 0xFFFFFFFF)\n\
+  -p <n>            use n as the crc divisor (default: 0x04C11DB7)\n\
+  -e                use big endian calculations\n\
+  -b                output as binary\n\
+  -x                xor the output by 0xFFFFFFFF\n\
+  -r                reverse the bits of the output\n\
+\n\
+";
+const char help2[] = "\
+numbers <n> may be entered as hexadecimal or octal with prefixes\n\
+";
+
+void handle_flag(char flag, char* (*nextarg)()) {
+	/* TODO: check for NULL on nextarg */
+	switch (flag) {
+	case 'h':
+		printf(help1);
+		printf(help2);
+		exit(0);
+	case 'i':
+		input_filename = nextarg();
+		break;
+	case 's':
+		remainder = strtoul(nextarg(), NULL, 0);
+		break;
+	case 'p':
+		crc_set_polynomial(strtoul(nextarg(), NULL, 0));
+		break;
+	case 'e':
+		crc_set_big_endian();
+		break;
+	case 'b':
+		print_binary = 1;
+		break;
+	case 'x':
+		xor_output = 0;
+		break;
+	case 'r':
+		reflect_output = 1;
+		break;
+	default:
+		exit(1);
+	}
 }
-
-const int args_switch_count = 9;
-char* args_switches[] = {
-"-h","--help","            display this text",
-"  ","--license","         show copyright & license information",
-"-i","--input","f          open file f for reading (default: stdin)",
-"-s","--start-at","n       start cycle with n (default: 0xFFFFFFFF)",
-"-p","--polynomial","n     use n as the crc divisor (default: 0x04C11DB7)",
-"-e","--big-endian","      use big endian calculations (default: little)",
-"-b","--binary","          output as binary (default: hex with newline)",
-"-x","--xor","             xor the output by 0xFFFFFFFF",
-"-r","--reflect","         reverse the bits of the output",
-};
-
-void print_license()
-{
-	puts("crc32  Copyright (C) 2012 Connor Olding\n\
-This program comes with ABSOLUTELY NO WARRANTY, and is free software.\n\
-See the file \"LICENSE\" or <http://gnu.org/licenses/gpl.txt> for details.");
-	exit(0);
-}
-
-void start_at()
-{
-	remainder = strtoul(args_poll(), NULL, 0);
-}
-
-void set_input()
-{
-	input_filename = args_poll();
-}
-
-void set_polynomial()
-{
-	const int p = strtoul(args_poll(), NULL, 0);
-	crc_set_polynomial(p);
-}
-
-void set_binary()
-{
-	print_binary = 1;
-}
-
-void set_xor()
-{
-	xor_output = 0;
-}
-
-void set_reflect()
-{
-	reflect_output = 1;
-}
-
-void (*args_functions[])() =
-	{args_print_help, print_license, set_input, start_at, set_polynomial,
-	crc_set_big_endian, set_binary, set_xor, set_reflect};
 
 static void open_stream()
 {
@@ -135,7 +122,7 @@ static void print_crc()
 int main(int argc, char** argv)
 {
 	crc_set_little_endian();
-	args_handle(argc, argv);
+	args_parse(argc, argv, handle_flag, NULL);
 	cycle_input();
 	print_crc();
 	return 0;
