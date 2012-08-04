@@ -18,10 +18,15 @@
 	#define FREOPEN_BLANK (NULL)
 #endif
 
-static ulong remainder = 0xFFFFFFFF;
+typedef struct string_node_s string_node;
+struct string_node_s {
+	char *s;
+	string_node *next;
+};
 
-static FILE *input_stream = NULL;
-static char *input_filename = "-";
+static string_node *input_node = NULL;
+
+static ulong starting = 0xFFFFFFFF;
 static char print_binary = 0;
 static char xor_output = 1;
 static char reflect_output = 0;
@@ -29,8 +34,8 @@ static char reflect_output = 0;
 static const char help1[] = "\
 crc32 - a 32-bit cyclic rendundancy check calculator\n\
 \n\
+  <files...>        open files as inputs\n\
   -h                display this text\n\
-  -i <file>         open file for reading (default: stdin)\n\
   -s <n>            start cycle with n (default: 0xFFFFFFFF)\n\
   -p <n>            use n as the crc divisor (default: 0x04C11DB7)\n\
   -e                use big endian calculations\n\
@@ -43,7 +48,16 @@ static const char help2[] = "\
 numbers <n> may be entered as hexadecimal or octal with prefixes\n\
 ";
 
-static void handle_flag(char flag, char *(*nextarg)()) {
+static char *check_next(char flag, char *next) {
+	if (!next) {
+		fprintf(stderr, "-%c requires another argument\n", flag);
+		exit(1);
+	}
+	return next;
+}
+
+static void handle_flag(char flag, char *(*nextarg)())
+{
 	char *next;
 	switch (flag) {
 	case 'h':
@@ -64,18 +78,13 @@ static void handle_flag(char flag, char *(*nextarg)()) {
 		return;
 	}
 
-	if (!(next = nextarg())) {
-		fprintf(stderr, "-%c requires another argument\n", flag);
-		exit(1);
-	}
 	switch (flag) {
 	case 's':
-		remainder = strtoul(next, NULL, 0);
-		break;
-	case 'i':
-		input_filename = next;
+		next = check_next(flag, nextarg());
+		starting = strtoul(next, NULL, 0);
 		break;
 	case 'p':
+		next = check_next(flag, nextarg());
 		crc_set_polynomial(strtoul(next, NULL, 0));
 		break;
 	default:
@@ -84,48 +93,50 @@ static void handle_flag(char flag, char *(*nextarg)()) {
 	}
 }
 
-static void complain(char *arg)
+static void add_input(char *arg)
 {
-	fprintf(stderr, "Unhandled argument: %s\n", arg);
-	exit(1);
-}
-
-static void open_stream()
-{
-	const char mode[] = "rb";
-	if (!strcmp(input_filename, "-")) {
-		freopen(FREOPEN_BLANK, mode, stdin);
-		input_stream = stdin;
-	} else {
-		input_stream = fopen(input_filename, mode);
-	}
-	if (input_stream == NULL) {
-		fprintf(stderr, "Could not open file for reading: %s\n",
-		    input_filename);
+	static string_node *last = NULL;
+	string_node *n = calloc(1, sizeof(string_node));
+	if (!n) {
+		fprintf(stderr, "calloc failed\n");
 		exit(1);
 	}
+
+	n->s = arg;
+	if (!input_node)
+		input_node = n;
+	else
+		last->next = n;
+	last = n;
 }
 
-static void close_stream()
+static FILE *open_stream(char *filename)
 {
-	fclose(input_stream);
+	FILE *stream = NULL;
+	stream = fopen(filename, "rb");
+	if (stream == NULL) {
+		perror(filename);
+		exit(1);
+	}
+	return stream;
 }
 
-static void cycle_input()
+static ulong cycle_file(FILE *stream)
 {
 	int c;
-	open_stream();
-	while ((c = getc(input_stream)) != EOF)
+	ulong remainder = starting;
+
+	while ((c = getc(stream)) != EOF)
 		crc_cycle(&remainder, c);
-	close_stream();
-	
+
 	if (xor_output)
 		remainder ^= 0xFFFFFFFF;
 	if (reflect_output)
 		remainder = crc_reflect(remainder);
+	return remainder;
 }
 
-static void print_crc()
+static void print_crc(ulong remainder)
 {
 	if (print_binary)
 		fwrite(&remainder, sizeof(remainder), 1, stdout);
@@ -135,9 +146,19 @@ static void print_crc()
 
 int main(int argc, char **argv)
 {
+	string_node *n;
 	crc_set_little_endian();
-	args_parse(argc, argv, handle_flag, complain);
-	cycle_input();
-	print_crc();
+	args_parse(argc, argv, handle_flag, add_input);
+
+	if (!input_node) {
+		freopen(FREOPEN_BLANK, "rb", stdin);
+		print_crc(cycle_file(stdin));
+	}
+	for (n = input_node; n; n = n->next) {
+		FILE *stream = open_stream(n->s);
+		print_crc(cycle_file(stream));
+		fclose(stream);
+		free(n);
+	}
 	return 0;
 }
