@@ -9,6 +9,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+typedef unsigned long ulong;
+
 #include "crc32.h"
 #include "args.h"
 
@@ -65,7 +67,7 @@ static void handle_flag(char flag, char *(*nextarg)())
 		printf(help2);
 		exit(0);
 	case 'e':
-		crc_set_big_endian();
+		crc_big_endian = 1;
 		return;
 	case 'b':
 		print_binary = 1;
@@ -85,7 +87,7 @@ static void handle_flag(char flag, char *(*nextarg)())
 		break;
 	case 'p':
 		next = check_next(flag, nextarg());
-		crc_set_polynomial(strtoul(next, NULL, 0));
+		crc_polynomial = strtoul(next, NULL, 0);
 		break;
 	default:
 		fprintf(stderr, "Unknown flag: -%c\n", flag);
@@ -147,7 +149,6 @@ static void print_crc(ulong remainder)
 int main(int argc, char **argv)
 {
 	string_node *n;
-	crc_set_little_endian();
 	args_parse(argc, argv, handle_flag, add_input);
 
 	if (!input_node) {
