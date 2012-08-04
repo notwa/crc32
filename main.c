@@ -26,7 +26,7 @@ static char print_binary = 0;
 static char xor_output = 1;
 static char reflect_output = 0;
 
-const char help1[] = "\
+static const char help1[] = "\
 crc32 - a 32-bit cyclic rendundancy check calculator\n\
 \n\
   -h                display this text\n\
@@ -35,45 +35,59 @@ crc32 - a 32-bit cyclic rendundancy check calculator\n\
   -p <n>            use n as the crc divisor (default: 0x04C11DB7)\n\
   -e                use big endian calculations\n\
   -b                output as binary\n\
-  -x                xor the output by 0xFFFFFFFF\n\
-  -r                reverse the bits of the output\n\
+  -x                NOT the output\n\
+  -r                reverse output's bits\n\
 \n\
 ";
-const char help2[] = "\
+static const char help2[] = "\
 numbers <n> may be entered as hexadecimal or octal with prefixes\n\
 ";
 
-void handle_flag(char flag, char *(*nextarg)()) {
-	/* TODO: check for NULL on nextarg */
+static void handle_flag(char flag, char *(*nextarg)()) {
+	char *next;
 	switch (flag) {
 	case 'h':
 		printf(help1);
 		printf(help2);
 		exit(0);
-	case 'i':
-		input_filename = nextarg();
-		break;
-	case 's':
-		remainder = strtoul(nextarg(), NULL, 0);
-		break;
-	case 'p':
-		crc_set_polynomial(strtoul(nextarg(), NULL, 0));
-		break;
 	case 'e':
 		crc_set_big_endian();
-		break;
+		return;
 	case 'b':
 		print_binary = 1;
-		break;
+		return;
 	case 'x':
 		xor_output = 0;
-		break;
+		return;
 	case 'r':
 		reflect_output = 1;
-		break;
-	default:
+		return;
+	}
+
+	if (!(next = nextarg())) {
+		fprintf(stderr, "-%c requires another argument\n", flag);
 		exit(1);
 	}
+	switch (flag) {
+	case 's':
+		remainder = strtoul(next, NULL, 0);
+		break;
+	case 'i':
+		input_filename = next;
+		break;
+	case 'p':
+		crc_set_polynomial(strtoul(next, NULL, 0));
+		break;
+	default:
+		fprintf(stderr, "Unknown flag: -%c\n", flag);
+		exit(1);
+	}
+}
+
+static void complain(char *arg)
+{
+	fprintf(stderr, "Unhandled argument: %s\n", arg);
+	exit(1);
 }
 
 static void open_stream()
@@ -122,7 +136,7 @@ static void print_crc()
 int main(int argc, char **argv)
 {
 	crc_set_little_endian();
-	args_parse(argc, argv, handle_flag, NULL);
+	args_parse(argc, argv, handle_flag, complain);
 	cycle_input();
 	print_crc();
 	return 0;
