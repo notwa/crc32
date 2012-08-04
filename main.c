@@ -20,6 +20,11 @@ typedef unsigned long ulong;
 	#define FREOPEN_BLANK (NULL)
 #endif
 
+#ifndef BUFFER_SIZE
+#define BUFFER_SIZE 4096
+#endif
+char buff[BUFFER_SIZE];
+
 typedef struct string_node_s string_node;
 struct string_node_s {
 	char *s;
@@ -123,13 +128,22 @@ static FILE *open_stream(char *filename)
 	return stream;
 }
 
+
 static ulong cycle_file(FILE *stream)
 {
-	int c;
 	ulong remainder = starting;
 
-	while ((c = getc(stream)) != EOF)
-		crc_cycle(&remainder, c);
+	int i, len;
+	do {
+		len = fread(buff, 1, BUFFER_SIZE, stream);
+		if (ferror(stream)) {
+			perror(NULL);
+			exit(1);
+		}
+
+		for (i = 0; i < len; i++)
+			crc_cycle(&remainder, buff[i]);
+	} while (!feof(stream));
 
 	if (xor_output)
 		remainder ^= 0xFFFFFFFF;
