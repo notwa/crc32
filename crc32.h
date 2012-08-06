@@ -5,8 +5,9 @@
  * copy of the license along with this program; see the file LICENSE.
  */
 
-ulong crc_polynomial;
+enum { CRC_TABLE_SIZE = 0x100 };
 
-void crc_be_cycle(ulong *remainder, char c);
-void crc_le_cycle(ulong *remainder, char c);
+void crc_fill_table(ulong *table, int big, ulong polynomial);
+void crc_be_cycle(ulong *table, ulong *remainder, char c);
+void crc_le_cycle(ulong *table, ulong *remainder, char c);
 ulong crc_reflect(ulong input);

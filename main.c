@@ -35,6 +35,7 @@ static string_node *input_node = NULL;
 
 static ulong starting = 0xFFFFFFFF;
 static char big_endian = 0;
+static ulong polynomial = 0x04C11DB7;
 static char print_binary = 0;
 static char xor_output = 1;
 static char reflect_output = 0;
@@ -90,7 +91,7 @@ static void handle_flag(char flag, char *(*nextarg)())
 		break;
 	case 'p':
 		next = check_next(flag, nextarg());
-		crc_polynomial = strtoul(next, NULL, 0);
+		polynomial = strtoul(next, NULL, 0);
 		break;
 	default:
 		fprintf(stderr, "Unknown flag: -%c\n", flag);
@@ -130,9 +131,12 @@ static FILE *open_stream(char *filename)
 static ulong cycle_file(FILE *stream)
 {
 	ulong remainder = starting;
-	void (*cycle)(ulong*, char) = (big_endian) ? crc_be_cycle : crc_le_cycle;
-
+	void (*cycle)(ulong*, ulong*, char) =
+	    (big_endian) ? crc_be_cycle : crc_le_cycle;
+	ulong table[CRC_TABLE_SIZE];
 	int i, len;
+
+	crc_fill_table(table, big_endian, polynomial);
 	do {
 		len = fread(buff, 1, BUFFER_SIZE, stream);
 		if (ferror(stream)) {
@@ -141,7 +145,7 @@ static ulong cycle_file(FILE *stream)
 		}
 
 		for (i = 0; i < len; i++)
-			cycle(&remainder, buff[i]);
+			cycle(table, &remainder, buff[i]);
 	} while (!feof(stream));
 
 	if (xor_output)

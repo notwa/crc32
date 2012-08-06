@@ -5,10 +5,7 @@
  * copy of the license along with this program; see the file LICENSE.
  */
 
-#include <stdlib.h>
-
 typedef unsigned long ulong;
-
 #include "crc32.h"
 
 int crc_big_endian = 0;
@@ -17,8 +14,6 @@ ulong crc_polynomial = 0x04C11DB7;
 enum {
 	TABLE_SIZE = 0x100
 };
-static ulong crc_be_table[TABLE_SIZE]; /* big endian */
-static ulong crc_le_table[TABLE_SIZE]; /* little endian */
 
 ulong crc_reflect(ulong input)
 {
@@ -32,47 +27,35 @@ ulong crc_reflect(ulong input)
 	return reflected;
 }
 
-static void crc_fill_table(int big)
+/* TODO: test returning array */
+void crc_fill_table(ulong *table, int big, ulong polynomial)
 {
 	ulong lsb = (big) ? 1 << 31 : 1; /* least significant bit */
-	ulong poly = (big) ? crc_polynomial : crc_reflect(crc_polynomial);
-	ulong *tc = (big) ? crc_be_table : crc_le_table;
+	ulong poly = (big) ? polynomial : crc_reflect(polynomial);
 	int c, i;
 
-	for (c = 0; c < TABLE_SIZE; c++, tc++) {
-		*tc = (big) ? c << 24 : c;
+	for (c = 0; c < TABLE_SIZE; c++, table++) {
+		*table = (big) ? c << 24 : c;
 		for (i = 0; i < 8; i++) {
-			if (*tc & lsb) {
-				*tc = (big) ? *tc << 1 : *tc >> 1;
-				*tc ^= poly;
+			if (*table & lsb) {
+				*table = (big) ? *table << 1 : *table >> 1;
+				*table ^= poly;
 			} else {
-				*tc = (big) ? *tc << 1 : *tc >> 1;
+				*table = (big) ? *table << 1 : *table >> 1;
 			}
-			*tc &= 0xFFFFFFFF;
+			*table &= 0xFFFFFFFF;
 		}
 	}
 }
 
-void crc_be_cycle(ulong *remainder, char c)
+void crc_be_cycle(ulong *table, ulong *remainder, char c)
 {
-	static char filled = 0;
-	ulong byte;
-	if (!filled) {
-		crc_fill_table(1);
-		filled = 1;
-	}
-	byte = crc_be_table[((*remainder) >> 24) ^ c];
+	ulong byte = table[((*remainder) >> 24) ^ c];
 	*remainder = (((*remainder) << 8) ^ byte) & 0xFFFFFFFF;
 }
 
-void crc_le_cycle(ulong *remainder, char c)
+void crc_le_cycle(ulong *table, ulong *remainder, char c)
 {
-	static char filled = 0;
-	ulong byte;
-	if (!filled) {
-		crc_fill_table(0);
-		filled = 1;
-	}
-	byte = crc_le_table[((*remainder) ^ c) & 0xFF];
+	ulong byte = table[((*remainder) ^ c) & 0xFF];
 	*remainder = ((*remainder) >> 8) ^ byte;
 }
