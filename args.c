@@ -5,9 +5,8 @@
  * copy of the license along with this program; see the file LICENSE.
  */
 
-#include "args.h"
-
 #include <stddef.h>
+#include "args.h"
 
 static int argc, argi;
 static char **argv, *flag;

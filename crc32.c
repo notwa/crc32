@@ -8,13 +8,6 @@
 typedef unsigned long ulong;
 #include "crc32.h"
 
-int crc_big_endian = 0;
-ulong crc_polynomial = 0x04C11DB7;
-
-enum {
-	TABLE_SIZE = 0x100
-};
-
 ulong crc_reflect(ulong input)
 {
 	ulong reflected = 0;
@@ -27,14 +20,13 @@ ulong crc_reflect(ulong input)
 	return reflected;
 }
 
-/* TODO: test returning array */
 void crc_fill_table(ulong *table, int big, ulong polynomial)
 {
 	ulong lsb = (big) ? 1 << 31 : 1; /* least significant bit */
 	ulong poly = (big) ? polynomial : crc_reflect(polynomial);
 	int c, i;
 
-	for (c = 0; c < TABLE_SIZE; c++, table++) {
+	for (c = 0; c < CRC_TABLE_SIZE; c++, table++) {
 		*table = (big) ? c << 24 : c;
 		for (i = 0; i < 8; i++) {
 			if (*table & lsb) {
