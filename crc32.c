@@ -32,42 +32,23 @@ ulong crc_reflect(ulong input)
 	return reflected;
 }
 
-static void crc_fill_big_endian_table()
+static void crc_fill_table(int big)
 {
-	const ulong lsb = 1 << 31; /* least significant bit */
-	ulong c;
-	int i;
+	ulong lsb = (big) ? 1 << 31 : 1; /* least significant bit */
+	ulong poly = (big) ? crc_polynomial : crc_reflect(crc_polynomial);
+	ulong *tc = (big) ? crc_be_table : crc_le_table;
+	int c, i;
 
-	for (c = 0; c < TABLE_SIZE; c++) {
-		crc_be_table[c] = c << 24;
+	for (c = 0; c < TABLE_SIZE; c++, tc++) {
+		*tc = (big) ? c << 24 : c;
 		for (i = 0; i < 8; i++) {
-			if (crc_be_table[c] & lsb) {
-				crc_be_table[c] <<= 1;
-				crc_be_table[c] ^= crc_polynomial;
+			if (*tc & lsb) {
+				*tc = (big) ? *tc << 1 : *tc >> 1;
+				*tc ^= poly;
 			} else {
-				crc_be_table[c] <<= 1;
+				*tc = (big) ? *tc << 1 : *tc >> 1;
 			}
-			crc_be_table[c] &= 0xFFFFFFFF;
-		}
-	}
-}
-
-static void crc_fill_little_endian_table()
-{
-	const ulong lsb = 1; /* least significant bit */
-	const ulong reflected = crc_reflect(crc_polynomial);
-	ulong c;
-	int i;
-	
-	for (c = 0; c < TABLE_SIZE; c++) {
-		crc_le_table[c] = c;
-		for (i = 0; i < 8; i++) {
-			if (crc_le_table[c] & lsb) {
-				crc_le_table[c] >>= 1;
-				crc_le_table[c] ^= reflected;
-			} else {
-				crc_le_table[c] >>= 1;
-			}
+			*tc &= 0xFFFFFFFF;
 		}
 	}
 }
@@ -76,10 +57,10 @@ static void crc_fill_tables_once()
 {
 	static char filled = 0;
 	if (crc_big_endian && !(filled & 1)) {
-		crc_fill_big_endian_table();
+		crc_fill_table(1);
 		filled |= 1;
 	} else if (!crc_big_endian && !(filled & 2)) {
-		crc_fill_little_endian_table();
+		crc_fill_table(0);
 		filled |= 2;
 	}
 }
