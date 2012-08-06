@@ -34,6 +34,7 @@ struct string_node_s {
 static string_node *input_node = NULL;
 
 static ulong starting = 0xFFFFFFFF;
+static char big_endian = 0;
 static char print_binary = 0;
 static char xor_output = 1;
 static char reflect_output = 0;
@@ -72,7 +73,7 @@ static void handle_flag(char flag, char *(*nextarg)())
 		printf(help2);
 		exit(0);
 	case 'e':
-		crc_big_endian = 1;
+		big_endian = 1;
 		return;
 	case 'b':
 		print_binary = 1;
@@ -83,9 +84,6 @@ static void handle_flag(char flag, char *(*nextarg)())
 	case 'r':
 		reflect_output = 1;
 		return;
-	}
-
-	switch (flag) {
 	case 's':
 		next = check_next(flag, nextarg());
 		starting = strtoul(next, NULL, 0);
@@ -132,6 +130,7 @@ static FILE *open_stream(char *filename)
 static ulong cycle_file(FILE *stream)
 {
 	ulong remainder = starting;
+	void (*cycle)(ulong*, char) = (big_endian) ? crc_be_cycle : crc_le_cycle;
 
 	int i, len;
 	do {
@@ -142,7 +141,7 @@ static ulong cycle_file(FILE *stream)
 		}
 
 		for (i = 0; i < len; i++)
-			crc_cycle(&remainder, buff[i]);
+			cycle(&remainder, buff[i]);
 	} while (!feof(stream));
 
 	if (xor_output)

@@ -53,27 +53,26 @@ static void crc_fill_table(int big)
 	}
 }
 
-static void crc_fill_tables_once()
+void crc_be_cycle(ulong *remainder, char c)
 {
 	static char filled = 0;
-	if (crc_big_endian && !(filled & 1)) {
+	ulong byte;
+	if (!filled) {
 		crc_fill_table(1);
-		filled |= 1;
-	} else if (!crc_big_endian && !(filled & 2)) {
-		crc_fill_table(0);
-		filled |= 2;
+		filled = 1;
 	}
+	byte = crc_be_table[((*remainder) >> 24) ^ c];
+	*remainder = (((*remainder) << 8) ^ byte) & 0xFFFFFFFF;
 }
 
-void crc_cycle(ulong *remainder, char c)
+void crc_le_cycle(ulong *remainder, char c)
 {
-	crc_fill_tables_once();
-	if (crc_big_endian) {
-		const ulong byte = crc_be_table[((*remainder) >> 24) ^ c];
-		*remainder = ((*remainder) << 8) ^ byte;
-		*remainder &= 0xFFFFFFFF;
-	} else {
-		const ulong byte = crc_le_table[((*remainder) ^ c) & 0xFF];
-		*remainder = ((*remainder) >> 8) ^ byte;
+	static char filled = 0;
+	ulong byte;
+	if (!filled) {
+		crc_fill_table(0);
+		filled = 1;
 	}
+	byte = crc_le_table[((*remainder) ^ c) & 0xFF];
+	*remainder = ((*remainder) >> 8) ^ byte;
 }

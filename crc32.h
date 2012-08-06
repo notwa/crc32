@@ -5,9 +5,8 @@
  * copy of the license along with this program; see the file LICENSE.
  */
 
-int crc_big_endian;
 ulong crc_polynomial;
 
-void crc_cycle(ulong *remainder, char c);
+void crc_be_cycle(ulong *remainder, char c);
+void crc_le_cycle(ulong *remainder, char c);
 ulong crc_reflect(ulong input);
-
