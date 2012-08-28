@@ -39,8 +39,10 @@ void args_parse(int argc_, char **argv_,
 			continue;
 		}
 		/* if arg == "--" */
-		if (arg[1] == '-' && !arg[2])
+		if (arg[1] == '-' && !arg[2]) {
+			argi++;
 			break;
+		}
 
 		for (flag = arg + 1; *flag; flag++) {
 			flagfn(*flag, nextarg);
