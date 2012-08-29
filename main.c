@@ -162,6 +162,16 @@ static void print_crc(ulong remainder)
 		printf("%08X\n", (int) remainder);
 }
 
+static void free_nodes(string_node *n)
+{
+	string_node *next;
+	while (n) {
+		next = n->next;
+		free(n);
+		n = next;
+	}
+}
+
 int main(int argc, char **argv)
 {
 	string_node *n;
@@ -175,7 +185,7 @@ int main(int argc, char **argv)
 		FILE *stream = open_stream(n->s);
 		print_crc(cycle_file(stream));
 		fclose(stream);
-		free(n);
 	}
+	free_nodes(input_node);
 	return 0;
 }
