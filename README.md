@@ -28,3 +28,4 @@ Notes
 *	Does not pad input.
 *	Big endian calculations are somewhat untested.
 
+## [Smaller Still](https://gist.github.com/notwa/5689243)
