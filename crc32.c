@@ -42,7 +42,7 @@ void crc_fill_table(ulong *table, int big, ulong polynomial)
 
 void crc_be_cycle(ulong *table, ulong *remainder, char c)
 {
-	ulong byte = table[((*remainder) >> 24) ^ c];
+	ulong byte = table[(((*remainder) >> 24) ^ c) & 0xff];
 	*remainder = (((*remainder) << 8) ^ byte) & 0xFFFFFFFF;
 }
 
