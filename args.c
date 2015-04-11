@@ -15,7 +15,7 @@ nextarg()
 	return argv[argi];
 }
 
-void
+static void
 args_parse(int argc_, char **argv_,
     void flagfn(char, char*()), void plainfn(char*))
 {

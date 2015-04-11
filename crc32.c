@@ -1,6 +1,6 @@
 enum { CRC_TABLE_SIZE = 0x100 };
 
-uint32_t
+static inline uint32_t
 crc_reflect(uint32_t input)
 {
 	uint32_t reflected = 0;
@@ -12,7 +12,7 @@ crc_reflect(uint32_t input)
 	return reflected;
 }
 
-void
+static inline void
 crc_fill_table(uint32_t *table, int big, uint32_t polynomial)
 {
 	uint32_t lsb = (big) ? 1 << 31 : 1; /* least significant bit */
@@ -32,14 +32,14 @@ crc_fill_table(uint32_t *table, int big, uint32_t polynomial)
 	}
 }
 
-void
+static inline void
 crc_be_cycle(uint32_t *table, uint32_t *remainder, char c)
 {
 	uint32_t byte = table[(((*remainder) >> 24) ^ c) & 0xff];
 	*remainder = (((*remainder) << 8) ^ byte) & 0xFFFFFFFF;
 }
 
-void
+static inline void
 crc_le_cycle(uint32_t *table, uint32_t *remainder, char c)
 {
 	uint32_t byte = table[((*remainder) ^ c) & 0xFF];
