@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-
-typedef unsigned long ulong;
+#include <stdint.h>
 
 #include "crc32.c"
 #include "args.c"
@@ -19,9 +18,9 @@ struct string_node_s {
 
 static string_node *input_node = NULL;
 
-static ulong starting = 0xFFFFFFFF;
+static uint32_t starting = 0xFFFFFFFF;
 static char big_endian = 0;
-static ulong polynomial = 0x04C11DB7;
+static uint32_t polynomial = 0x04C11DB7;
 static char print_binary = 0;
 static char xor_output = 1;
 static char reflect_output = 0;
@@ -118,13 +117,13 @@ open_stream(char *filename)
 }
 
 
-static ulong
+static uint32_t
 cycle_file(FILE *stream)
 {
-	ulong remainder = starting;
-	void (*cycle)(ulong*, ulong*, char) =
+	uint32_t remainder = starting;
+	void (*cycle)(uint32_t*, uint32_t*, char) =
 	    (big_endian) ? crc_be_cycle : crc_le_cycle;
-	ulong table[CRC_TABLE_SIZE];
+	uint32_t table[CRC_TABLE_SIZE];
 
 	crc_fill_table(table, big_endian, polynomial);
 	do {
@@ -146,7 +145,7 @@ cycle_file(FILE *stream)
 }
 
 static void
-print_crc(ulong remainder)
+print_crc(uint32_t remainder)
 {
 	if (print_binary)
 		fwrite(&remainder, sizeof(remainder), 1, stdout);

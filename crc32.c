@@ -1,9 +1,9 @@
 enum { CRC_TABLE_SIZE = 0x100 };
 
-ulong
-crc_reflect(ulong input)
+uint32_t
+crc_reflect(uint32_t input)
 {
-	ulong reflected = 0;
+	uint32_t reflected = 0;
 	for (int i = 0; i < 4 * 8; i++) {
 		reflected <<= 1;
 		reflected |= input & 1;
@@ -13,10 +13,10 @@ crc_reflect(ulong input)
 }
 
 void
-crc_fill_table(ulong *table, int big, ulong polynomial)
+crc_fill_table(uint32_t *table, int big, uint32_t polynomial)
 {
-	ulong lsb = (big) ? 1 << 31 : 1; /* least significant bit */
-	ulong poly = (big) ? polynomial : crc_reflect(polynomial);
+	uint32_t lsb = (big) ? 1 << 31 : 1; /* least significant bit */
+	uint32_t poly = (big) ? polynomial : crc_reflect(polynomial);
 
 	for (int c = 0; c < CRC_TABLE_SIZE; c++, table++) {
 		*table = (big) ? c << 24 : c;
@@ -33,15 +33,15 @@ crc_fill_table(ulong *table, int big, ulong polynomial)
 }
 
 void
-crc_be_cycle(ulong *table, ulong *remainder, char c)
+crc_be_cycle(uint32_t *table, uint32_t *remainder, char c)
 {
-	ulong byte = table[(((*remainder) >> 24) ^ c) & 0xff];
+	uint32_t byte = table[(((*remainder) >> 24) ^ c) & 0xff];
 	*remainder = (((*remainder) << 8) ^ byte) & 0xFFFFFFFF;
 }
 
 void
-crc_le_cycle(ulong *table, ulong *remainder, char c)
+crc_le_cycle(uint32_t *table, uint32_t *remainder, char c)
 {
-	ulong byte = table[((*remainder) ^ c) & 0xFF];
+	uint32_t byte = table[((*remainder) ^ c) & 0xFF];
 	*remainder = ((*remainder) >> 8) ^ byte;
 }
