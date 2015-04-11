@@ -1,12 +1,4 @@
-/* Copyright (C) 2012 Connor Olding
- *
- * This program is licensed under the terms of the MIT License, and
- * is distributed without any warranty.  You should have received a
- * copy of the license along with this program; see the file LICENSE.
- */
-
-typedef unsigned long ulong;
-#include "crc32.h"
+enum { CRC_TABLE_SIZE = 0x100 };
 
 ulong
 crc_reflect(ulong input)
