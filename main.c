@@ -118,28 +118,36 @@ open_stream(char *filename)
 	return stream;
 }
 
+static inline size_t
+buff_read(FILE *stream)
+{
+	size_t len = fread(buff, 1, BUFFER_SIZE, stream);
+	if (ferror(stream)) {
+		perror(NULL);
+		exit(1);
+	}
+	return len;
+}
 
 static uint32_t
 cycle_file(FILE *stream)
 {
 	uint32_t remainder = starting;
-	typeof(&crc_be_cycle) cycle;
-	cycle = (big_endian) ? crc_be_cycle : crc_le_cycle;
 	uint32_t table[CRC_TABLE_SIZE];
 
 	if (big_endian)
 		crc_be_fill_table(table, polynomial);
 	else
 		crc_le_fill_table(table, polynomial);
-	do {
-		int len = fread(buff, 1, BUFFER_SIZE, stream);
-		if (ferror(stream)) {
-			perror(NULL);
-			exit(1);
-		}
 
-		for (int i = 0; i < len; i++)
-			cycle(table, &remainder, buff[i]);
+	if (big_endian) do {
+		size_t len = buff_read(stream);
+		for (size_t i = 0; i < len; i++)
+			crc_be_cycle(table, &remainder, buff[i]);
+	} while (!feof(stream)); else do {
+		size_t len = buff_read(stream);
+		for (size_t i = 0; i < len; i++)
+			crc_le_cycle(table, &remainder, buff[i]);
 	} while (!feof(stream));
 
 	if (xor_output)
