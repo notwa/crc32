@@ -123,8 +123,8 @@ static uint32_t
 cycle_file(FILE *stream)
 {
 	uint32_t remainder = starting;
-	void (*cycle)(uint32_t*, uint32_t*, char) =
-	    (big_endian) ? crc_be_cycle : crc_le_cycle;
+	typeof(&crc_be_cycle) cycle;
+	cycle = (big_endian) ? crc_be_cycle : crc_le_cycle;
 	uint32_t table[CRC_TABLE_SIZE];
 
 	if (big_endian)
