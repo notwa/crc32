@@ -27,7 +27,7 @@ static bool print_binary = 0;
 static bool xor_output = 1;
 static bool reflect_output = 0;
 
-static const char help1[] = "\
+static const char help[] = "\
 crc32 - a 32-bit cyclic rendundancy check calculator\n\
 \n\
   <files...>        open files as inputs\n\
@@ -39,9 +39,7 @@ crc32 - a 32-bit cyclic rendundancy check calculator\n\
   -x                NOT the output\n\
   -r                reverse output's bits\n\
 \n\
-";
-static const char help2[] = "\
-numbers <n> may be entered as hexadecimal or octal with prefixes\n\
+numbers <n> may be in hexadecimal or octal using proper prefixes\n\
 ";
 
 static char
@@ -59,8 +57,7 @@ handle_flag(char flag, char *(*nextarg)())
 	char *next;
 	switch (flag) {
 	case 'h': {
-		printf(help1);
-		printf(help2);
+		printf(help);
 	} exit(0);
 	case 'e': {
 		big_endian = 1;

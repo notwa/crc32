@@ -19,7 +19,7 @@ crc32 - a 32-bit cyclic rendundancy check calculator
   -x                NOT the output
   -r                reverse output's bits
 
-numbers <n> may be entered as hexadecimal or octal with prefixes
+numbers <n> may be in hexadecimal or octal using proper prefixes
 ```
 
 Notes
