@@ -55,13 +55,15 @@ crc_le_fill_table(uint32_t *table, uint32_t polynomial)
 static inline void
 crc_be_cycle(uint32_t *table, uint32_t *remainder, uint8_t c)
 {
-	const uint32_t byte = table[(((*remainder) >> 24) ^ c)];
-	*remainder = (((*remainder) << 8) ^ byte);
+	const uint8_t i = ((*remainder) >> 24) ^ c;
+	const uint32_t next = table[i];
+	*remainder = ((*remainder) << 8) ^ next;
 }
 
 static inline void
 crc_le_cycle(uint32_t *table, uint32_t *remainder, uint8_t c)
 {
-	const uint32_t byte = table[((*remainder) ^ c) & 0xFF];
-	*remainder = ((*remainder) >> 8) ^ byte;
+	const uint8_t i = (*remainder) ^ c;
+	const uint32_t next = table[i];
+	*remainder = ((*remainder) >> 8) ^ next;
 }
