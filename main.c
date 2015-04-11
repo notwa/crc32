@@ -10,14 +10,8 @@
 
 typedef unsigned long ulong;
 
-#include "crc32.h"
-#include "args.h"
-
-#ifdef _MSC_VER
-	#define FREOPEN_BLANK ("")
-#else
-	#define FREOPEN_BLANK (NULL)
-#endif
+#include "crc32.c"
+#include "args.c"
 
 #ifndef BUFFER_SIZE
 #define BUFFER_SIZE 4096
@@ -56,7 +50,8 @@ static const char help2[] = "\
 numbers <n> may be entered as hexadecimal or octal with prefixes\n\
 ";
 
-static char *check_next(char flag, char *next) {
+static char
+*check_next(char flag, char *next) {
 	if (!next) {
 		fprintf(stderr, "-%c requires another argument\n", flag);
 		exit(1);
@@ -64,41 +59,43 @@ static char *check_next(char flag, char *next) {
 	return next;
 }
 
-static void handle_flag(char flag, char *(*nextarg)())
+static void
+handle_flag(char flag, char *(*nextarg)())
 {
 	char *next;
 	switch (flag) {
-	case 'h':
+	case 'h': {
 		printf(help1);
 		printf(help2);
-		exit(0);
-	case 'e':
+	} exit(0);
+	case 'e': {
 		big_endian = 1;
-		return;
-	case 'b':
+	} break;
+	case 'b': {
 		print_binary = 1;
-		return;
-	case 'x':
+	} break;
+	case 'x': {
 		xor_output = 0;
-		return;
-	case 'r':
+	} break;
+	case 'r': {
 		reflect_output = 1;
-		return;
-	case 's':
+	} break;
+	case 's': {
 		next = check_next(flag, nextarg());
 		starting = strtoul(next, NULL, 0);
-		break;
-	case 'p':
+	} break;
+	case 'p': {
 		next = check_next(flag, nextarg());
 		polynomial = strtoul(next, NULL, 0);
-		break;
-	default:
+	} break;
+	default: {
 		fprintf(stderr, "Unknown flag: -%c\n", flag);
-		exit(1);
+	} exit(1);
 	}
 }
 
-static void add_input(char *arg)
+static void
+add_input(char *arg)
 {
 	static string_node *last = NULL;
 	string_node *n = calloc(1, sizeof(string_node));
@@ -115,7 +112,8 @@ static void add_input(char *arg)
 	last = n;
 }
 
-static FILE *open_stream(char *filename)
+static FILE *
+open_stream(char *filename)
 {
 	FILE *stream = NULL;
 	stream = fopen(filename, "rb");
@@ -127,23 +125,23 @@ static FILE *open_stream(char *filename)
 }
 
 
-static ulong cycle_file(FILE *stream)
+static ulong
+cycle_file(FILE *stream)
 {
 	ulong remainder = starting;
 	void (*cycle)(ulong*, ulong*, char) =
 	    (big_endian) ? crc_be_cycle : crc_le_cycle;
 	ulong table[CRC_TABLE_SIZE];
-	int i, len;
 
 	crc_fill_table(table, big_endian, polynomial);
 	do {
-		len = fread(buff, 1, BUFFER_SIZE, stream);
+		int len = fread(buff, 1, BUFFER_SIZE, stream);
 		if (ferror(stream)) {
 			perror(NULL);
 			exit(1);
 		}
 
-		for (i = 0; i < len; i++)
+		for (int i = 0; i < len; i++)
 			cycle(table, &remainder, buff[i]);
 	} while (!feof(stream));
 
@@ -154,7 +152,8 @@ static ulong cycle_file(FILE *stream)
 	return remainder;
 }
 
-static void print_crc(ulong remainder)
+static void
+print_crc(ulong remainder)
 {
 	if (print_binary)
 		fwrite(&remainder, sizeof(remainder), 1, stdout);
@@ -162,7 +161,8 @@ static void print_crc(ulong remainder)
 		printf("%08X\n", (int) remainder);
 }
 
-static void free_nodes(string_node *n)
+static void
+free_nodes(string_node *n)
 {
 	string_node *next;
 	while (n) {
@@ -172,16 +172,16 @@ static void free_nodes(string_node *n)
 	}
 }
 
-int main(int argc, char **argv)
+int
+main(int argc, char **argv)
 {
-	string_node *n;
 	args_parse(argc, argv, handle_flag, add_input);
 
 	if (!input_node) {
-		freopen(FREOPEN_BLANK, "rb", stdin);
+		freopen(NULL, "rb", stdin);
 		print_crc(cycle_file(stdin));
 	}
-	for (n = input_node; n; n = n->next) {
+	for (string_node *n = input_node; n; n = n->next) {
 		FILE *stream = open_stream(n->s);
 		print_crc(cycle_file(stream));
 		fclose(stream);

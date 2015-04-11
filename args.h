@@ -7,4 +7,3 @@
 
 void args_parse(int argc, char **argv,
     void flagfn(char, char*()), void plainfn(char*));
-

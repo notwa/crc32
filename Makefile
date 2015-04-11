@@ -1,19 +1,14 @@
 PROGRAM = crc32
 .PHONY: all clean install
-FILES = main.c args.c crc32.c
-
-CFLAGS += -Wall -Werror -ansi -pedantic
-LDFLAGS +=
-PREFIX ?= /usr/local
 
 all: $(PROGRAM)
 
-$(PROGRAM): $(FILES)
-	$(CC) -o $@ $(CFLAGS) $(LDFLAGS) $(FILES)
+$(PROGRAM): main.c
+	$(CC) -o $@ -Wall -Winline -std=gnu11 $(CFLAGS) $(LDFLAGS) $^
 
 clean:
 	-rm -f $(PROGRAM)
 
 install:
-	cp $(PROGRAM) $(PREFIX)/bin
-
+	install -d 0755 $(PREFIX)/bin
+	install -m 0755 $(PROGRAM) $(PREFIX)/bin
