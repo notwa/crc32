@@ -13,35 +13,55 @@ crc_reflect(uint32_t input)
 }
 
 static inline void
-crc_fill_table(uint32_t *table, int big, uint32_t polynomial)
+crc_be_fill_table(uint32_t *table, uint32_t polynomial)
 {
-	uint32_t lsb = (big) ? 1 << 31 : 1; /* least significant bit */
-	uint32_t poly = (big) ? polynomial : crc_reflect(polynomial);
+	const uint32_t lsb = 1 << 31;
+	uint32_t poly = polynomial;
 
 	for (int c = 0; c < CRC_TABLE_SIZE; c++, table++) {
-		*table = (big) ? c << 24 : c;
+		uint32_t v = c << 24;
 		for (int i = 0; i < 8; i++) {
-			if (*table & lsb) {
-				*table = (big) ? *table << 1 : *table >> 1;
-				*table ^= poly;
+			if (v & lsb) {
+				v <<= 1;
+				v ^= poly;
 			} else {
-				*table = (big) ? *table << 1 : *table >> 1;
+				v <<= 1;
 			}
-			*table &= 0xFFFFFFFF;
 		}
+		*table = v;
+	}
+}
+
+static inline void
+crc_le_fill_table(uint32_t *table, uint32_t polynomial)
+{
+	const uint32_t lsb = 1;
+	uint32_t poly = crc_reflect(polynomial);
+
+	for (int c = 0; c < CRC_TABLE_SIZE; c++, table++) {
+		uint32_t v = c;
+		for (int i = 0; i < 8; i++) {
+			if (v & lsb) {
+				v >>= 1;
+				v ^= poly;
+			} else {
+				v >>= 1;
+			}
+		}
+		*table = v;
 	}
 }
 
 static inline void
 crc_be_cycle(uint32_t *table, uint32_t *remainder, char c)
 {
-	uint32_t byte = table[(((*remainder) >> 24) ^ c) & 0xff];
+	const uint32_t byte = table[(((*remainder) >> 24) ^ c) & 0xFF];
 	*remainder = (((*remainder) << 8) ^ byte) & 0xFFFFFFFF;
 }
 
 static inline void
 crc_le_cycle(uint32_t *table, uint32_t *remainder, char c)
 {
-	uint32_t byte = table[((*remainder) ^ c) & 0xFF];
+	const uint32_t byte = table[((*remainder) ^ c) & 0xFF];
 	*remainder = ((*remainder) >> 8) ^ byte;
 }

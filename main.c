@@ -127,7 +127,10 @@ cycle_file(FILE *stream)
 	    (big_endian) ? crc_be_cycle : crc_le_cycle;
 	uint32_t table[CRC_TABLE_SIZE];
 
-	crc_fill_table(table, big_endian, polynomial);
+	if (big_endian)
+		crc_be_fill_table(table, polynomial);
+	else
+		crc_le_fill_table(table, polynomial);
 	do {
 		int len = fread(buff, 1, BUFFER_SIZE, stream);
 		if (ferror(stream)) {
