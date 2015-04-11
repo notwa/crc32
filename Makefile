@@ -10,5 +10,5 @@ clean:
 	-rm -f $(PROGRAM)
 
 install:
-	install -d 0755 $(PREFIX)/bin
+	install -m 0755 -d $(PREFIX)/bin
 	install -m 0755 $(PROGRAM) $(PREFIX)/bin
