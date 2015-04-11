@@ -5,6 +5,8 @@
 #include "crc32.c"
 #include "args.c"
 
+typedef int bool;
+
 #ifndef BUFFER_SIZE
 #define BUFFER_SIZE 4096
 #endif
@@ -19,11 +21,11 @@ struct string_node_s {
 static string_node *input_node = NULL;
 
 static uint32_t starting = 0xFFFFFFFF;
-static char big_endian = 0;
+static bool big_endian = 0;
 static uint32_t polynomial = 0x04C11DB7;
-static char print_binary = 0;
-static char xor_output = 1;
-static char reflect_output = 0;
+static bool print_binary = 0;
+static bool xor_output = 1;
+static bool reflect_output = 0;
 
 static const char help1[] = "\
 crc32 - a 32-bit cyclic rendundancy check calculator\n\
