@@ -12,13 +12,10 @@ typedef int bool;
 #endif
 char buff[BUFFER_SIZE];
 
-typedef struct string_node_s string_node;
-struct string_node_s {
-	char *s;
-	string_node *next;
-};
+#define MAX_INPUTS 256
 
-static string_node *input_node = NULL;
+static char *inputs[MAX_INPUTS];
+static unsigned int input_n = 0;
 
 static uint32_t starting = 0xFFFFFFFF;
 static bool big_endian = 0;
@@ -88,19 +85,11 @@ handle_flag(char flag, char *(*nextarg)())
 static void
 add_input(char *arg)
 {
-	static string_node *last = NULL;
-	string_node *n = calloc(1, sizeof(string_node));
-	if (!n) {
-		fprintf(stderr, "calloc failed\n");
+	if (input_n >= MAX_INPUTS) {
+		fprintf(stderr, "Too many inputs specified\n");
 		exit(1);
 	}
-
-	n->s = arg;
-	if (!input_node)
-		input_node = n;
-	else
-		last->next = n;
-	last = n;
+	inputs[input_n++] = arg;
 }
 
 static FILE *
@@ -163,31 +152,19 @@ print_crc(uint32_t remainder)
 		printf("%08X\n", (int) remainder);
 }
 
-static void
-free_nodes(string_node *n)
-{
-	string_node *next;
-	while (n) {
-		next = n->next;
-		free(n);
-		n = next;
-	}
-}
-
 int
 main(int argc, char **argv)
 {
 	args_parse(argc, argv, handle_flag, add_input);
 
-	if (!input_node) {
+	if (!input_n) {
 		freopen(NULL, "rb", stdin);
 		print_crc(cycle_file(stdin));
 	}
-	for (string_node *n = input_node; n; n = n->next) {
-		FILE *stream = open_stream(n->s);
+	for (int i = 0; i < input_n; i++) {
+		FILE *stream = open_stream(inputs[i]);
 		print_crc(cycle_file(stream));
 		fclose(stream);
 	}
-	free_nodes(input_node);
 	return 0;
 }
