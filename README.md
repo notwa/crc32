@@ -5,6 +5,12 @@ It computes [crc32s,][crc] and what of it?
 
 [crc]: http://en.wikipedia.org/wiki/Cyclic_redundancy_check
 
+Update
+------
+If portability isn't a concern; as in your compiler can build gnu11 code;
+I'd recommend you use the ["modern"](https://github.com/notwa/crc32/tree/modern) branch.
+The code is much cleaner and slightly faster.
+
 Usage
 ----
 ```
