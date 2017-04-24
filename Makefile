@@ -4,7 +4,7 @@ PROGRAM = crc32
 all: $(PROGRAM)
 
 $(PROGRAM): main.c
-	$(CC) -o $@ -Wall -Winline -std=gnu11 $(CFLAGS) $(LDFLAGS) $^
+	$(CC) -o $@ -Wall -Winline -std=c99 $(CFLAGS) $(LDFLAGS) $^
 
 clean:
 	-rm -f $(PROGRAM)
