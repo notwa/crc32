@@ -15,7 +15,7 @@ char buff[BUFFER_SIZE];
 #define MAX_INPUTS 256
 
 static char *inputs[MAX_INPUTS];
-static unsigned int input_n = 0;
+static int input_n = 0;
 
 static uint32_t starting = 0xFFFFFFFF;
 static bool big_endian = 0;
@@ -126,13 +126,15 @@ cycle_file(FILE *stream)
 	else
 		crc_le_fill_table(table, polynomial);
 
+	// cast len to int to enable potential signedness optimizations.
+	// this is safe so long as BUFFER_SIZE can fit in an int.
 	if (big_endian) do {
-		size_t len = buff_read(stream);
-		for (size_t i = 0; i < len; i++)
+		int len = (int) buff_read(stream);
+		for (int i = 0; i < len; i++)
 			crc_be_cycle(table, &remainder, buff[i]);
 	} while (!feof(stream)); else do {
-		size_t len = buff_read(stream);
-		for (size_t i = 0; i < len; i++)
+		int len = (int) buff_read(stream);
+		for (int i = 0; i < len; i++)
 			crc_le_cycle(table, &remainder, buff[i]);
 	} while (!feof(stream));
 
