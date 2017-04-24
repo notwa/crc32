@@ -1,45 +1,30 @@
-/* Copyright (C) 2012 Connor Olding
- *
- * This program is licensed under the terms of the MIT License, and
- * is distributed without any warranty.  You should have received a
- * copy of the license along with this program; see the file LICENSE.
- */
-
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 
-typedef unsigned long ulong;
+#include "crc32.c"
+#include "args.c"
 
-#include "crc32.h"
-#include "args.h"
-
-#ifdef _MSC_VER
-	#define FREOPEN_BLANK ("")
-#else
-	#define FREOPEN_BLANK (NULL)
-#endif
+typedef int bool;
 
 #ifndef BUFFER_SIZE
 #define BUFFER_SIZE 4096
 #endif
 char buff[BUFFER_SIZE];
 
-typedef struct string_node_s string_node;
-struct string_node_s {
-	char *s;
-	string_node *next;
-};
+#define MAX_INPUTS 256
 
-static string_node *input_node = NULL;
+static char *inputs[MAX_INPUTS];
+static int input_n = 0;
 
-static ulong starting = 0xFFFFFFFF;
-static char big_endian = 0;
-static ulong polynomial = 0x04C11DB7;
-static char print_binary = 0;
-static char xor_output = 1;
-static char reflect_output = 0;
+static uint32_t starting = 0xFFFFFFFF;
+static bool big_endian = 0;
+static uint32_t polynomial = 0x04C11DB7;
+static bool print_binary = 0;
+static bool xor_output = 1;
+static bool reflect_output = 0;
 
-static const char help1[] = "\
+static const char help[] = "\
 crc32 - a 32-bit cyclic rendundancy check calculator\n\
 \n\
   <files...>        open files as inputs\n\
@@ -51,12 +36,11 @@ crc32 - a 32-bit cyclic rendundancy check calculator\n\
   -x                NOT the output\n\
   -r                reverse output's bits\n\
 \n\
-";
-static const char help2[] = "\
-numbers <n> may be entered as hexadecimal or octal with prefixes\n\
+numbers <n> may be in hexadecimal or octal using proper prefixes\n\
 ";
 
-static char *check_next(char flag, char *next) {
+static char
+*check_next(char flag, char *next) {
 	if (!next) {
 		fprintf(stderr, "-%c requires another argument\n", flag);
 		exit(1);
@@ -64,58 +48,52 @@ static char *check_next(char flag, char *next) {
 	return next;
 }
 
-static void handle_flag(char flag, char *(*nextarg)())
+static void
+handle_flag(char flag, char *(*nextarg)())
 {
 	char *next;
 	switch (flag) {
-	case 'h':
-		printf(help1);
-		printf(help2);
-		exit(0);
-	case 'e':
+	case 'h': {
+		printf(help);
+	} exit(0);
+	case 'e': {
 		big_endian = 1;
-		return;
-	case 'b':
+	} break;
+	case 'b': {
 		print_binary = 1;
-		return;
-	case 'x':
+	} break;
+	case 'x': {
 		xor_output = 0;
-		return;
-	case 'r':
+	} break;
+	case 'r': {
 		reflect_output = 1;
-		return;
-	case 's':
+	} break;
+	case 's': {
 		next = check_next(flag, nextarg());
 		starting = strtoul(next, NULL, 0);
-		break;
-	case 'p':
+	} break;
+	case 'p': {
 		next = check_next(flag, nextarg());
 		polynomial = strtoul(next, NULL, 0);
-		break;
-	default:
+	} break;
+	default: {
 		fprintf(stderr, "Unknown flag: -%c\n", flag);
-		exit(1);
+	} exit(1);
 	}
 }
 
-static void add_input(char *arg)
+static void
+add_input(char *arg)
 {
-	static string_node *last = NULL;
-	string_node *n = calloc(1, sizeof(string_node));
-	if (!n) {
-		fprintf(stderr, "calloc failed\n");
+	if (input_n >= MAX_INPUTS) {
+		fprintf(stderr, "Too many inputs specified\n");
 		exit(1);
 	}
-
-	n->s = arg;
-	if (!input_node)
-		input_node = n;
-	else
-		last->next = n;
-	last = n;
+	inputs[input_n++] = arg;
 }
 
-static FILE *open_stream(char *filename)
+static FILE *
+open_stream(char *filename)
 {
 	FILE *stream = NULL;
 	stream = fopen(filename, "rb");
@@ -126,25 +104,38 @@ static FILE *open_stream(char *filename)
 	return stream;
 }
 
-
-static ulong cycle_file(FILE *stream)
+static inline size_t
+buff_read(FILE *stream)
 {
-	ulong remainder = starting;
-	void (*cycle)(ulong*, ulong*, char) =
-	    (big_endian) ? crc_be_cycle : crc_le_cycle;
-	ulong table[CRC_TABLE_SIZE];
-	int i, len;
+	size_t len = fread(buff, 1, BUFFER_SIZE, stream);
+	if (ferror(stream)) {
+		perror(NULL);
+		exit(1);
+	}
+	return len;
+}
 
-	crc_fill_table(table, big_endian, polynomial);
-	do {
-		len = fread(buff, 1, BUFFER_SIZE, stream);
-		if (ferror(stream)) {
-			perror(NULL);
-			exit(1);
-		}
+static uint32_t
+cycle_file(FILE *stream)
+{
+	uint32_t remainder = starting;
+	uint32_t table[CRC_TABLE_SIZE];
 
-		for (i = 0; i < len; i++)
-			cycle(table, &remainder, buff[i]);
+	if (big_endian)
+		crc_be_fill_table(table, polynomial);
+	else
+		crc_le_fill_table(table, polynomial);
+
+	// cast len to int to enable potential signedness optimizations.
+	// this is safe so long as BUFFER_SIZE can fit in an int.
+	if (big_endian) do {
+		int len = (int) buff_read(stream);
+		for (int i = 0; i < len; i++)
+			crc_be_cycle(table, &remainder, buff[i]);
+	} while (!feof(stream)); else do {
+		int len = (int) buff_read(stream);
+		for (int i = 0; i < len; i++)
+			crc_le_cycle(table, &remainder, buff[i]);
 	} while (!feof(stream));
 
 	if (xor_output)
@@ -154,7 +145,8 @@ static ulong cycle_file(FILE *stream)
 	return remainder;
 }
 
-static void print_crc(ulong remainder)
+static void
+print_crc(uint32_t remainder)
 {
 	if (print_binary)
 		fwrite(&remainder, sizeof(remainder), 1, stdout);
@@ -162,30 +154,19 @@ static void print_crc(ulong remainder)
 		printf("%08X\n", (int) remainder);
 }
 
-static void free_nodes(string_node *n)
+int
+main(int argc, char **argv)
 {
-	string_node *next;
-	while (n) {
-		next = n->next;
-		free(n);
-		n = next;
-	}
-}
-
-int main(int argc, char **argv)
-{
-	string_node *n;
 	args_parse(argc, argv, handle_flag, add_input);
 
-	if (!input_node) {
-		freopen(FREOPEN_BLANK, "rb", stdin);
+	if (!input_n) {
+		freopen(NULL, "rb", stdin);
 		print_crc(cycle_file(stdin));
 	}
-	for (n = input_node; n; n = n->next) {
-		FILE *stream = open_stream(n->s);
+	for (int i = 0; i < input_n; i++) {
+		FILE *stream = open_stream(inputs[i]);
 		print_crc(cycle_file(stream));
 		fclose(stream);
 	}
-	free_nodes(input_node);
 	return 0;
 }

@@ -1,18 +1,10 @@
-/* Copyright (C) 2012 Connor Olding
- *
- * This program is licensed under the terms of the MIT License, and
- * is distributed without any warranty.  You should have received a
- * copy of the license along with this program; see the file LICENSE.
- */
+enum { CRC_TABLE_SIZE = 0x100 };
 
-typedef unsigned long ulong;
-#include "crc32.h"
-
-ulong crc_reflect(ulong input)
+static inline uint32_t
+crc_reflect(uint32_t input)
 {
-	ulong reflected = 0;
-	int i;
-	for (i = 0; i < 4 * 8; i++) {
+	uint32_t reflected = 0;
+	for (int i = 0; i < 32; i++) {
 		reflected <<= 1;
 		reflected |= input & 1;
 		input >>= 1;
@@ -20,34 +12,56 @@ ulong crc_reflect(ulong input)
 	return reflected;
 }
 
-void crc_fill_table(ulong *table, int big, ulong polynomial)
+static inline void
+crc_be_fill_table(uint32_t *table, uint32_t polynomial)
 {
-	ulong lsb = (big) ? 1 << 31 : 1; /* least significant bit */
-	ulong poly = (big) ? polynomial : crc_reflect(polynomial);
-	int c, i;
+	const uint32_t lsb = 1 << 31;
+	uint32_t poly = polynomial;
 
-	for (c = 0; c < CRC_TABLE_SIZE; c++, table++) {
-		*table = (big) ? c << 24 : c;
-		for (i = 0; i < 8; i++) {
-			if (*table & lsb) {
-				*table = (big) ? *table << 1 : *table >> 1;
-				*table ^= poly;
+	for (int c = 0; c < CRC_TABLE_SIZE; c++) {
+		uint32_t v = c << 24;
+		for (int i = 0; i < 8; i++) {
+			if (v & lsb) {
+				v <<= 1;
+				v ^= poly;
 			} else {
-				*table = (big) ? *table << 1 : *table >> 1;
+				v <<= 1;
 			}
-			*table &= 0xFFFFFFFF;
 		}
+		*table++ = v;
 	}
 }
 
-void crc_be_cycle(ulong *table, ulong *remainder, char c)
+static inline void
+crc_le_fill_table(uint32_t *table, uint32_t polynomial)
 {
-	ulong byte = table[(((*remainder) >> 24) ^ c) & 0xff];
-	*remainder = (((*remainder) << 8) ^ byte) & 0xFFFFFFFF;
+	const uint32_t lsb = 1;
+	uint32_t poly = crc_reflect(polynomial);
+
+	for (int c = 0; c < CRC_TABLE_SIZE; c++) {
+		uint32_t v = c;
+		for (int i = 0; i < 8; i++) {
+			if (v & lsb) {
+				v >>= 1;
+				v ^= poly;
+			} else {
+				v >>= 1;
+			}
+		}
+		*table++ = v;
+	}
 }
 
-void crc_le_cycle(ulong *table, ulong *remainder, char c)
+static inline void
+crc_be_cycle(uint32_t *table, uint32_t *remainder, uint8_t c)
 {
-	ulong byte = table[((*remainder) ^ c) & 0xFF];
-	*remainder = ((*remainder) >> 8) ^ byte;
+	const uint8_t i = (*remainder >> 24) ^ c;
+	*remainder = (*remainder << 8) ^ table[i];
+}
+
+static inline void
+crc_le_cycle(uint32_t *table, uint32_t *remainder, uint8_t c)
+{
+	const uint8_t i = (*remainder & 0xFF) ^ c;
+	*remainder = (*remainder >> 8) ^ table[i];
 }

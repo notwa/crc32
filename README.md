@@ -5,12 +5,6 @@ It computes [crc32s,][crc] and what of it?
 
 [crc]: http://en.wikipedia.org/wiki/Cyclic_redundancy_check
 
-Update
-------
-If portability isn't a concern; as in your compiler can build gnu11 code;
-I'd recommend you use the ["modern"](https://github.com/notwa/crc32/tree/modern) branch.
-The code is much cleaner and slightly faster.
-
 Usage
 ----
 ```
@@ -25,13 +19,7 @@ crc32 - a 32-bit cyclic rendundancy check calculator
   -x                NOT the output
   -r                reverse output's bits
 
-numbers <n> may be entered as hexadecimal or octal with prefixes
+numbers <n> may be in hexadecimal or octal using proper prefixes
 ```
-
-Notes
------
-
-*	Does not pad input.
-*	Big endian calculations are somewhat untested.
 
 ## [Smaller Still](https://gist.github.com/notwa/5689243)
