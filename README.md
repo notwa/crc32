@@ -22,10 +22,4 @@ crc32 - a 32-bit cyclic rendundancy check calculator
 numbers <n> may be in hexadecimal or octal using proper prefixes
 ```
 
-Notes
------
-
-*	Does not pad input.
-*	Big endian calculations are somewhat untested.
-
 ## [Smaller Still](https://gist.github.com/notwa/5689243)
